@@ -1,0 +1,18 @@
+{
+  "pages": [
+    "pages/entry/entry",
+    "pages/fighting_sort/fighting_sort",
+    "pages/fighting_match/fighting_match",
+    "pages/friends_sort/friends_sort",
+    "pages/friends_match/friends_match",
+    "pages/rank/rank",
+    "pages/fighting_room/fighting_room"
+  ],
+  "window": {
+    "backgroundColor": "#052152",
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#3883FA",
+    "navigationBarTitleText": "知识比拼",
+    "navigationBarTextStyle": "white"
+  }
+}

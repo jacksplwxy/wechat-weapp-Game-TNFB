@@ -1,0 +1,15 @@
+<!--pages/pipei/pipei.wxml-->
+
+<view class='img-contain'>
+  <image src='{{userInfo.avatarUrl}}' class='avatarUrl'></image>
+</view>
+<view style='text-align:center;'>{{status}}</view>
+<view class='time'>
+  <view class='t0'>{{number}}</view>
+  <view class="t1"></view>
+  <view class="t2"></view>
+  <view class="t3"></view>
+  <view class="t4"></view>
+  <view class="t5"></view>
+  <view class="t6"></view>
+</view>

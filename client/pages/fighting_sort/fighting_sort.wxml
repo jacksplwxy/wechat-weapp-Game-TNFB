@@ -1,0 +1,6 @@
+<view class='title'>选择您擅长的领域开始答题吧</view>
+<view>
+  <button wx:for="{{question_sort}}" class='sort' bindtap='gotoFighting_match' data-sortid='{{item.id}}'>
+    {{item.sort}}
+  </button>
+</view>

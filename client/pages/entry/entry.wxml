@@ -1,0 +1,24 @@
+<view class='container'>
+  <view class='person-infor'>
+    <image src='{{userInfo.avatarUrl}}' class='avatarUrl'></image>
+    <view style='text-align:center;'>
+      <view>{{userInfo.nickName}}</view>
+      <view>得分:{{score}}</view>
+    </view>
+    <image src='../../imgs/entry_qr.svg' class='qr' bindtap='get_qr_address'></image> <!--注意不要跳转到web_view-->
+  </view>
+
+  <view class='choose' bindtap='gotoFighting'>
+    <image src='../../imgs/entry_fighting.jpg'></image>
+    <view>排位赛</view>
+  </view>
+  <view class='choose' bindtap='gotoFriends'>
+    <image src='../../imgs/entry_friends.jpg'></image>
+    <view>好友对战</view>
+  </view>
+  <!-- <button bindtap='gotoCustomRoom'>自定义房间</button> -->
+  <view class='choose' bindtap='gotoRank'>
+    <image src='../../imgs/entry_rank.jpg'></image>
+    <view>好友排名</view>
+  </view>
+</view>

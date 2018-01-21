@@ -1,0 +1,47 @@
+<view >
+
+  <view class='tab'>
+    <view class="{{currentTab==0 ? 'on' : ''}}" data-current="0" bindtap="swichNav">好友排名</view>
+    <view class="{{currentTab==1 ? 'on' : ''}}" data-current="1" bindtap="swichNav">全球排名</view>
+  </view>
+  <view >
+
+    <view wx:if='{{currentTab==0}}' >
+      <view wx:for="{{friendsData}}" class='item'>
+        <view style='width:10%;font-size:38rpx;'>{{index+1}}</view>
+        <view style='width:30%;'>
+          <image src='{{item.avatarUrl}}'></image>
+        </view>
+        <view style='width:70%;'>
+          <view class='itemDetail'>
+            <text>{{item.nickName}}</text>
+            <text style='font-size:28rpx;'>来自:{{item.city}}</text>
+          </view>
+          <view class='itemDetail'>
+            <text>最强王者</text>
+            <text style='font-size:28rpx;'>得分:{{item.score}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+    <view wx:if='{{currentTab==1}}'>
+      <view wx:for="{{globalData}}" class='item'>
+        <view style='width:10%;font-size:38rpx;'>{{index+1}}</view>
+        <view style='width:30%;'>
+          <image src='{{item.avatarUrl}}'></image>
+        </view>
+        <view style='width:70%;'>
+          <view class='itemDetail'>
+            <text>{{item.nickName}}</text>
+            <text style='font-size:28rpx;'>来自:{{item.city?item.city:'德玛西亚'}}</text>
+          </view>
+          <view class='itemDetail'>
+            <text>最强王者</text>
+            <text style='font-size:28rpx;'>得分:{{item.score}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+</view>

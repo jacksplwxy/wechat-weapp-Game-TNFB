@@ -1,0 +1,12 @@
+/**app.wxss**/
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  font-size: 30rpx;
+} 
+image{
+  width: 60rpx;
+  height: 60rpx;
+}

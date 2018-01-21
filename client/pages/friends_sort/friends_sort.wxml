@@ -1,0 +1,7 @@
+<view class='title'>
+  <text> 选择你们想要较量的领域对战吧</text>
+  <button open-type='share' type='primary' style='width:80%;' disabled='{{choosed}}' class="{{!choosed ? 'animated pulse infinite' : ''}}">转发给好友</button>
+</view>
+<view>
+  <button wx:for="{{question_sort}}" class="{{index+1==sortId&&sortId!=='' ? 'animated fadeIn' : ''}} sort" bindtap='getShareInfo' data-sortid='{{item.id}}' data-sortname='{{item.sort}}'>{{item.sort}}</button>
+</view>

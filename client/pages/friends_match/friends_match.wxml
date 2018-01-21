@@ -1,0 +1,23 @@
+<view class='header'>
+  <view class='animated lightSpeedIn-left '>
+    <image src='{{userInfo.avatarUrl}}'></image>
+    <view style='text-align:center'>{{userInfo.nickName}}</view>
+  </view>
+
+  <view class='animated rubberBand'>{{status}}</view>
+  <view class='animated lightSpeedIn-right'>
+    <image src='{{user_others.avatarUrl}}'></image>
+    <view style='text-align:center'>{{user_others.nickName}}</view>
+  </view>
+
+</view>
+<view class='body'>
+  <button class='containCircle animated-slow fadeInUp' bindtap='goback'>
+    <image src='../../imgs/quit.svg'></image>
+    <view>首页</view>
+  </button>
+  <button open-type='share' class='containCircle animated-slow fadeInUp'>
+    <image src='../../imgs/share.svg'></image>
+    <view>邀请</view>
+  </button>
+</view>

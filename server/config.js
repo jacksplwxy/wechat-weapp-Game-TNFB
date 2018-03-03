@@ -5,9 +5,9 @@ const CONF = {
   port: '5757',
   rootPathname: '',
   // 微信小程序 App ID
-  appId: 'xxxxxx',
+  appId: '填写您申请的appId',
   // 微信小程序 App Secret
-  appSecret: 'xxxxxx',
+  appSecret: '填写您的小程序密码',
   // 是否使用腾讯云代理登录小程序
   useQcloudLogin: true,
   /**
@@ -20,7 +20,7 @@ const CONF = {
     port: 3306,
     user: 'root',
     db: 'cAuth',
-    pass: 'xxxxx',
+    pass: '初始密码为您的appId',
     char: 'utf8mb4'
   },
   cos: {

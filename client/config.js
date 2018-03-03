@@ -3,11 +3,9 @@
  */
 
 // 此处主机域名修改成腾讯云解决方案分配的域名
-var host = 'https://7bfpfnvb.qcloud.la'  //开发环境
-//var host = 'https://207361447.running-u.club' //生产环境1
-//var host = 'https://10190114.running-u.com' //生产环境2
+var host = '填写您的开发环境域名'  //开发环境
 
-var appId ='wx472e8ad45bbfcb79'
+var appId ='填写您申请的appId'
 
 var config = {
 

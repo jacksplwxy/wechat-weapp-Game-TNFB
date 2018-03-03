@@ -8,9 +8,9 @@ Page({
     question_sort: [],
     sortId: '',
     sortName: '',
-    choosed: true,
+    showShareButton:false
   },
-  onLoad: function (opt) {
+  onLoad (opt) {
     app.appData.fromClickId = opt.currentClickId
     app.upDateUser_networkFromClickId = require('../../utils/upDateUser_networkFromClickId.js').upDateUser_networkFromClickId
     wx.showShareMenu({
@@ -19,35 +19,36 @@ Page({
     app.pageGetUserInfo(this)
     this.getFriends_sort()
   },
-  onShow: function () {
-    this.close_tunnel()//当信道连接或者重连了时，关闭已连接的信道
+  onShow () {
+    this.closeTunnel()//当信道连接或者重连了时，关闭已连接的信道
   },
-  onShareAppMessage: function (res) {
+  onShareAppMessage (res) {
     const that = this;
-    console.log('that.data.openId', that.data.openId)
+    app.appData.friendsFightingRoom = new Date().getTime().toString() + parseInt(Math.random() * 10000000)//创建:时间+随机数
     return {
       title: '谁才是' + this.data.sortName + '领域的王者？比比看吧！',
-      path: '/pages/friends_match/friends_match?scene=1044&fromOpenId=' + that.data.openId + '&sortid=' + that.data.sortId + '&sortname=' + that.data.sortName + '&currentClickId=' + app.appData.currentClickId,
+      path: '/pages/friends_match/friends_match?scene=1044&fromOpenId=' + that.data.openId + '&sortId=' + that.data.sortId + '&sortName=' + that.data.sortName + '&currentClickId=' + app.appData.currentClickId + '&friendsFightingRoom=' + app.appData.friendsFightingRoom,
       success: function (res) {
+        that.setData({ showShareButton:false})
         //转发时向用户关系表中更新一条转发记录(个人为person，群为GId)。
         require('../../utils/upDateShareInfoToUser_network.js').upDateShareInfoToUser_network(app, that, res)
         wx.navigateTo({
-          url: '../friends_match/friends_match?scene=1044&fromOpenId=' + that.data.openId + '&sortid=' + that.data.sortId + '&sortname=' + that.data.sortName + '&currentClickId=' + app.appData.currentClickId,
+             url: '../friends_match/friends_match?scene=1044&fromOpenId=' + that.data.openId + '&sortId=' + that.data.sortId + '&sortName=' + that.data.sortName + '&currentClickId=' + app.appData.currentClickId + '&friendsFightingRoom=' + app.appData.friendsFightingRoom,
         })
       }
     }
   },
-  close_tunnel() {
+  closeTunnel() {
     //当信道连接或者重连了时，关闭已连接的信道
-    if (app.appData.tunnel_status == 'connect' || app.appData.tunnel_status == 'reconnect') {
-      app.tunnel.close();
+    if (app.appData.tunnelStatus == 'connect' || app.appData.tunnelStatus == 'reconnect') {
+      app.tunnel.close()
     }
   },
   getFriends_sort() {
     //util.showBusy('正在请求');
     qcloud.request({
       login: false,
-      url: app.appData.baseUrl + 'question_sort',
+      url: `${app.appData.baseUrl}question_sort`,
       success: (res) => {
         // util.showSuccess('请求成功完成');
         let data0 = res.data.data;
@@ -63,9 +64,14 @@ Page({
   },
   getShareInfo(e) {
     this.setData({
-      choosed: false,
       sortId: e.target.dataset.sortid,
       sortName: e.target.dataset.sortname,
+      showShareButton:true
     })
   },
+  closeShareButton(){
+    this.setData({
+      showShareButton: false
+    })
+  }
 })

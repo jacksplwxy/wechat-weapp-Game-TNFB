@@ -1,23 +1,23 @@
 let qcloud = require('../../vendor/wafer2-client-sdk/index')
 let config = require('../../config')
 let util = require('../../utils/util.js')
+let app = getApp()
 
-let app = getApp();
 Page({
   data: {
     question_sort: [],
   },
-  onLoad: function (options) {
-    this.getFighting_sort()
+  onLoad (options) {
+    this.getFightingSort()
   },
-  onShow:function(){
-    this.close_tunnel()//当信道连接或者重连了时，关闭已连接的信道
+  onShow(){
+    this.closeTunnel()//当信道连接或者重连了时，关闭已连接的信道
   },
-  getFighting_sort() {
+  getFightingSort() {
     //util.showBusy('正在请求');
     qcloud.request({
       login: false,
-      url: app.appData.baseUrl + 'question_sort',
+      url: `${app.appData.baseUrl}question_sort`,
       success: (res) => {
         // util.showSuccess('请求成功完成');
         let data0 = res.data.data;
@@ -31,14 +31,14 @@ Page({
       },
     });
   },
-  gotoFighting_match(e) {
+  gotoFightingMatch(e) {
     wx.redirectTo({
-      url: '../fighting_match/fighting_match?sortId=' + e.target.dataset.sortid
+			url: `../fighting_match/fighting_match?sortId=${e.target.dataset.sortid} `
     })
   },
-  close_tunnel(){
+  closeTunnel(){
     //当信道连接或者重连了时，关闭已连接的信道
-    if (app.appData.tunnel_status == 'connect' || app.appData.tunnel_status == 'reconnect' ){
+    if (app.appData.tunnelStatus === 'connect' || app.appData.tunnelStatus === 'reconnect' ){
       app.tunnel.close();
     }
   }

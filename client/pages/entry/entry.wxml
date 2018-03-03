@@ -12,11 +12,10 @@
     <image src='../../imgs/entry_fighting.jpg'></image>
     <view>排位赛</view>
   </view>
-  <view class='choose' bindtap='gotoFriends'>
+   <view class='choose' bindtap='gotoFriends'>
     <image src='../../imgs/entry_friends.jpg'></image>
     <view>好友对战</view>
-  </view>
-  <!-- <button bindtap='gotoCustomRoom'>自定义房间</button> -->
+  </view> 
   <view class='choose' bindtap='gotoRank'>
     <image src='../../imgs/entry_rank.jpg'></image>
     <view>好友排名</view>

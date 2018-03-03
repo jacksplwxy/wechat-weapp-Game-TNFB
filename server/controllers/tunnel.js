@@ -3,12 +3,13 @@ const { mysql } = require('../qcloud')
 
 const option = {
   MAX_SCORE_GAP: 10000,//匹配的玩家最大分差不能超过10000分
-  MATCH_SPEED: 4000,//匹配的频率:每4秒遍历匹配一次
+  MATCH_SPEED: 3000,//匹配的频率:每3秒遍历匹配一次
   QUESTION_NUMBER: 5,//答题数5个
-  SEND_QUESTIONS_DELAY: 3000,//匹配完成后，间隔3S后开始向前端发题
-  SEND_QUESTION_TIME: 15000,//发题的频率：每15秒发送一题
-  PING_PONG_TIME: 8000,//PING-PONG响应的PING发送频率
-  PING_PONG_OUT_TIME: 10000//PING-PONG响应超时时间
+  SEND_QUESTIONS_DELAY: 3500,//匹配完成后，间隔3.5S后开始向前端发题
+  SEND_QUESTION_TIME: 16000,//发题的频率：每16秒发送一题
+  PING_PONG_TIME: 6000,//PING-PONG响应的PING发送频率
+  PING_PONG_OUT_TIME: 20000,//PING-PONG响应超时时间
+  MAX_NUMBER_TUNNEL_RESEND: 3,//每个信道允许出现无效信道时重新发送的次数
 }
 const players = {} //用户信息存储对象：openId为key
 const rooms = {}//房间存储对象：房间名为key
@@ -17,35 +18,35 @@ const match = {//匹配对象：包含数据和函数
   queueData: [],
   init() {
     let finished = true
+	function match_succ(player1,player2){
+		//创建房间
+        this.createRoom(player1.openId, player2.openId)
+        //队列中删除匹配好的2个玩家
+        tools.deleteQueueOpenId(player1.openId)
+        tools.deleteQueueOpenId(player2.openId)
+	}
     const loopMatch = setInterval(() => {
       if (finished) {
         finished = false
-        console.info('匹配中...')
         for (let index1 = 0; index1 < this.queueData.length; index1++) {
           let player1 = players[this.queueData[index1]]
-          if (player1.friendsFightingRoom === undefined) {//排位赛匹配
+		  //排位赛匹配
+          if (player1.friendsFightingRoom === undefined) {
             for (let index2 = index1; index2 < this.queueData.length; index2++) {
               let player2 = players[this.queueData[index2]]
-              if (player2.sortId && player2.sortId === player1.sortId && Math.abs(player2.score - player1.score) < option.MAX_SCORE_GAP && player2.openId !== player1.openId) {
-                //创建房间
-                this.createRoom(player1.openId, player2.openId)
-                //队列中删除匹配好的2个玩家
-                tools.deleteQueueOpenId(player1.openId)
-                tools.deleteQueueOpenId(player2.openId)
-                //结束该player1的匹配
+              if (player2.friendsFightingRoom === undefined && player2.sortId === player1.sortId && Math.abs(player2.score - player1.score) < option.MAX_SCORE_GAP && player2.openId !== player1.openId) {
+                this.match_succ(player1,player2)
+				//结束该player1的匹配
                 break
               }
             }
           }
-          if (player1.friendsFightingRoom !== undefined && player1.friendsFightingRoom !== null) {//好友匹配
+		  //好友匹配
+          if (player1.friendsFightingRoom !== undefined && player1.friendsFightingRoom !== null) {
             for (let index2 = index1; index2 < this.queueData.length; index2++) {
               let player2 = players[this.queueData[index2]]
-              if (player2.sortId && player2.friendsFightingRoom === player1.friendsFightingRoom && player2.openId !== player1.openId) {
-                //创建房间
-                this.createRoom(player1.openId, player2.openId)
-                //队列中删除匹配好的2个玩家
-                tools.deleteQueueOpenId(player1.openId)
-                tools.deleteQueueOpenId(player2.openId)
+              if (player2.friendsFightingRoom !== undefined && player2.friendsFightingRoom !== null && player2.friendsFightingRoom === player1.friendsFightingRoom && player2.openId !== player1.openId) {
+                this.match_succ(player1,player2)
                 //结束该player1的匹配
                 break
               }
@@ -89,6 +90,8 @@ const match = {//匹配对象：包含数据和函数
       })
       //向客户端发题
       tools.sendQuestionMain(roomName)
+    },error=>{
+         console.log(error)
     })
   },
 }
@@ -96,6 +99,7 @@ match.init()
 const tools = {//工具对象，包含常用数据和函数
   data: {
     timerSendQuestion: [],//每个房间的发题定时器
+    numberTunnelResend: [],//key为信道ID，记录每个信道重复发送的次数
   },
   //广播到指定信道
   broadcast(tunnelIdsArray, type, content) {
@@ -104,36 +108,53 @@ const tools = {//工具对象，包含常用数据和函数
         const invalidTunnelIds = result.data && result.data.invalidTunnelIds || []
         if (invalidTunnelIds.length) {
           console.error('======检测到无效的信道IDs======', invalidTunnelIds)
-          //从 players 和 tunnelIdsArray 中将无效的信道记录移除
-          //   invalidTunnelIds.forEach(tunnelId => {
-          //    
-          //   })
+          invalidTunnelIds.forEach(tunnelId => {
+            let number = this.data.numberTunnelResend[tunnelId] ? this.data.numberTunnelResend[tunnelId] : 0
+            if (number < option.MAX_NUMBER_TUNNEL_RESEND) {//当发送次数不大于规定次数时，可以进行重发
+              let timer = setTimeout(() => {//1.5S后重发一次数据
+                this.data.numberTunnelResend[tunnelId] = ++number
+                tools.broadcast([tunnelId], type, content)
+                clearTimeout(timer)
+              }, 2000)
+            } else {
+                 console.log('当前的numberTunnelResend长度为：', Object.keys(this.data.numberTunnelResend).length)
+                 if (Object.keys(this.data.numberTunnelResend).length > 20) { //当累积未清理掉的无效信道达到20个时，清空一次数组
+                this.data.numberTunnelResend = []
+                console.info('清空后的numberTunnelResend为', this.data.numberTunnelResend)
+              } else {
+                this.clsTimeout(tunnelId, this.data.numberTunnelResend)
+                console.info('删除后的numberTunnelResend为', this.data.numberTunnelResend)
+              }
+            }
+          })
         }
-      })
+         }, error => {
+              console.log(error)
+         })
   },
   //关闭指定信道
   closeTunnel(tunnelId) {
     console.info('开始关闭信道:' + tunnelId)
     tunnel.closeTunnel(tunnelId)
     let openId = this.getPlayersOpenId(tunnelId)
-    if (rooms[players[openId].roomName]) {
-      if (!rooms[players[openId].roomName].finished) {//如果用户存在房号，则说明是战斗状态断线，视为逃跑
-        tools.runAway(openId)
+    if (players[openId]) {
+      if (players[openId].roomName) {
+        if (rooms[players[openId].roomName]) {
+          if (!rooms[players[openId].roomName].finished) {//如果用户存在房号，则说明是战斗状态断线，视为逃跑
+            tools.runAway(openId)
+          }
+        }
+      }
+      if (players[openId]) {
+        if (players[openId].roomName) {
+          this.clsTimeout(players[openId].roomName, tools.data.timerSendQuestion)//清除发题定时器
+          delete rooms[players[openId].roomName]//删除房间
+        }
+        this.deleteQueueOpenId(openId)//删除匹配队列中的openId
+        delete players[openId]//删除玩家信息
+        console.info('信道关闭后的队列、玩家、房间和发题定时器为：', match.queueData, players, rooms, tools.data.timerSendQuestion)
       }
     }
-    this.clsTimeout(players[openId].roomName, tools.data.timerSendQuestion)//清除发题定时器
-    delete rooms[players[openId].roomName]//删除房间
-    this.deleteQueueOpenId(openId)//删除匹配队列中的openId
-    delete players[openId]//删除玩家信息
-    console.info('信道关闭后的队列、玩家、房间和发题定时器为：', match.queueData, players, rooms, tools.data.timerSendQuestion)
-  },
-  //限制队列人数
-  limitQueueNumber(fn) {
-
-  },
-  //获取Players的所有信道ID，并作为数组输出
-  getConnectedTunnelIds() {
-
   },
   //根据信道ID获取openId
   getPlayersOpenId(tunnelId) {
@@ -165,10 +186,10 @@ const tools = {//工具对象，包含常用数据和函数
   },
   //发题函数
   sendQuestion(roomName) {
-    let openId1 = rooms[roomName].player1
-    let openId2 = rooms[roomName].player2
-    this.clsTimeout(roomName, this.data.timerSendQuestion)
     try {
+      let openId1 = rooms[roomName].player1
+      let openId2 = rooms[roomName].player2
+      this.clsTimeout(roomName, this.data.timerSendQuestion)
       tools.broadcast([players[openId1].tunnelId, players[openId2].tunnelId], 'sendQuestion', {
         question: rooms[roomName].library[0] ? rooms[roomName].library[0] : {},
         //choice = []//[openID:'',userChoose: '',//用户选择了第几个答案 answerColor: '',//用户是否答对 scoreMyself: 0,//用户总得分]
@@ -190,7 +211,7 @@ const tools = {//工具对象，包含常用数据和函数
       players[openId2].choice[1] = ''//初始化用户选择状态:第几个答案
       players[openId2].choice[2] = ''//初始化用户选择状态:是否答对
     } catch (error) {
-      console.log('错误:' + error)
+      console.error('错误:' + error)
     }
   },
   //更新得分
@@ -209,6 +230,9 @@ const tools = {//工具对象，包含常用数据和函数
       }
       mysql('cSessionInfo').where({ open_id: openId }).update('score', score).then(res => {
         console.info(openId + '得分已更新:' + score)
+      }, error => {
+           //201803010019:此处添加数据库操作失败报错
+           console.log(error)
       })
     })
   },
@@ -231,7 +255,9 @@ const tools = {//工具对象，包含常用数据和函数
     this.storeFightingRecord(openIdFail, 0, true)
     //通知赢家对方已逃跑
     if (players[openId]) {
-      rooms[players[openId].roomName].finished = true//先改变房间状态，再关闭，避免被认为逃跑行为
+      if (players[openId].roomName) {
+        rooms[players[openId].roomName].finished = true//先改变房间状态，再关闭，避免被认为逃跑行为
+      }
     }
     this.broadcast([players[openIdWin].tunnelId], 'runawayNotice', {
       message: '对手已逃跑'
@@ -243,16 +269,17 @@ const tools = {//工具对象，包含常用数据和函数
   //fightingResult： 0:表示输，1：表示赢,2:表示平手
   //runAway:true/false
   async storeFightingRecord(openId, fightingResult, runAway = false) {
+    let roomName = players[openId].roomName
     try {
-      if (fightingRecord[players[openId].roomName] ? false : true) {
-        fightingRecord[players[openId].roomName] = {
+      if (fightingRecord[roomName] ? false : true) {
+        fightingRecord[roomName] = {
           openId_winner: '',
           openId_loser: '',
           score_winner: 0,
           score_loser: 0,
         }
       }
-      let myRecord = fightingRecord[players[openId].roomName]
+      let myRecord = fightingRecord[roomName]
       //获取双方比赛数据
       if (fightingResult == 0) {//0为输
         myRecord.openId_loser = openId
@@ -263,15 +290,18 @@ const tools = {//工具对象，包含常用数据和函数
       }
       //当获取到双方的数据时，开始存储到数据库
       if (myRecord.openId_winner && myRecord.openId_loser) {
-        let room_name = players[openId].roomName,
+        let room_name = roomName,
           run_away = runAway,
           open_id_winner = myRecord.openId_winner,
           open_id_loser = myRecord.openId_loser,
           score_winner = myRecord.score_winner,
           score_loser = myRecord.score_loser
-        delete fightingRecord[players[openId].roomName]
-        await mysql('fighting_record').insert({ id: null, room_name, run_away, open_id_winner, open_id_loser, score_winner, score_loser, time: null })
-        console.info('比赛战绩已存储')
+        delete fightingRecord[room_name]
+         try{
+              await mysql('fighting_record').insert({ id: null, room_name, run_away, open_id_winner, open_id_loser, score_winner, score_loser, time: null })
+         }catch(error){
+              console.log(error)
+         }
         console.log('清空后的fightingRecord为', fightingRecord)
       }
     } catch (error) {
@@ -286,13 +316,6 @@ const tools = {//工具对象，包含常用数据和函数
  * 在客户端成功连接 WebSocket 信道服务之后会调用该方法，
  */
 function onConnect(tunnelId) {
-  //if (!(tunnelId in players)) {
-  //   console.log(`Unknown tunnelId(${tunnelId}) was connectd, close it`)
-  //   tools.closeTunnel(tunnelId)
-  // }
-
-  //ATTENTION:此处必须在onConnect回调中发送，确保信道是真正连接OK,防止信道混乱发生错误
-  //通知前端完成信道替换
   tools.broadcast([tunnelId], 'tunnelIdReplaced', {
     newTunnelId: tunnelId
   })
@@ -307,11 +330,6 @@ function onConnect(tunnelId) {
  * 会调用该方法，此时可以进行清理及通知操作
  */
 function onClose(tunnelId) {
-  // if (!(tunnelId in players)) {
-  //   console.log(`[onClose][Invalid TunnelId]=>`, tunnelId)
-  //   tools.closeTunnel(tunnelId)
-  //   return
-  // }
   console.info('onClose监听到信道' + tunnelId + '关闭')
   tools.closeTunnel(tunnelId)
 }
@@ -336,21 +354,14 @@ function onMessage(tunnelId, type, content) {
             //再次设置一个定时器
             players[openId].timer = setTimeout(() => {//ping-pong机制：监听客户端是否离线
               console.log('开始执行PING-PONG定时器函数')
-              try {
-                console.log('此时的players为', players)
-                tools.closeTunnel(tunnelId)//如果离线，则清空用户信息
-              } catch (error) {
-                console.error("删除信道时发生错误了", error)
-              } finally {
-                delete players[tools.getPlayersOpenId(tunnelId)]
-              }
+              tools.closeTunnel(tunnelId)//如果离线，则清空用户信息
             }, option.PING_PONG_OUT_TIME)
             //再次发送一个PING
             tools.broadcast([tunnelId], 'PING', {})
+            console.log(tunnelId + '发送一个PING')
             clearTimeout(timer)
           }
         }, option.PING_PONG_TIME)
-
       }
       break
 
@@ -419,7 +430,7 @@ module.exports = {
       userinfo.sortId = null
       userinfo.choice = [openId, '', '', 0]//[openID:'',user_choose: '',//用户选择了第几个答案 answer_color: '',//用户是否答对 score_myself: '',//用户总得分]
       userinfo.timer = setTimeout(() => {//ping-pong机制：监听客户端是否离线
-        tools.closeTunnel(data.tunnel.tunnelId)//如果离线，则清空用户信息
+        //tools.closeTunnel(data.tunnel.tunnelId)//如果离线，则清空用户信息//暂时先取消此处定时器
       }, option.PING_PONG_OUT_TIME)
       players[openId] = userinfo  //将此用户作为合法用户，并将openId和用户信息(不包含得分，状态等数据)关联起来
       console.info('新信道加入后的队列、玩家、房间和发题定时器为：', match.queueData, players, rooms, tools.data.timerSendQuestion)

@@ -2,14 +2,14 @@
 var qcloud = require('../../vendor/wafer2-client-sdk/index')
 var config = require('../../config')
 var util = require('../../utils/util.js')
-const match = require('../../utils/commonTunnelAPI.js').match//引入匹配函数
+const match = require('../../utils/tunnelMacth.js').match//引入匹配函数
 const app = getApp();
+
 Page({
   data: {
     status: '初始化...',
-    opt: '',
   },
-  onLoad: function (opt) {
+  onLoad (opt) {
     app.appData.fromClickId = opt.currentClickId
     app.upDateUser_networkFromClickId = require('../../utils/upDateUser_networkFromClickId.js').upDateUser_networkFromClickId
     wx.showShareMenu({
@@ -21,21 +21,21 @@ Page({
     } else {
       app.pageGetUserInfo(this)
     }
-    console.log('opt', opt)
-    app.pageGetUserInfo(this, match(this, app, opt.sortid, opt.fromOpenId))//开始匹配
+    app.pageGetUserInfo(this, match(this, app, opt))//开始匹配
   },
-  onShareAppMessage: function (res) {
-     const that=this
+  onShareAppMessage (res) {
+    const that = this
+    console.log('this.data.opt', this.data.opt)
     return {
-      title: '我才是' + this.data.opt.sortname + '领域的王者,敢来挑战吗?',
-      path: '/pages/friends_match/friends_match?scene=1044&fromOpenId=' + this.data.openId + '&sortid=' + this.data.opt.sortid + '&sortname=' + this.data.opt.sortname + '&currentClickId=' + app.appData.currentClickId,
+      title: '我才是' + this.data.opt.sortName + '领域的王者,敢来挑战吗?',
+      path: '/pages/friends_match/friends_match?scene=1044&fromOpenId=' + this.data.openId + '&sortId=' + this.data.opt.sortId + '&sortName=' + this.data.opt.sortName + '&currentClickId=' + app.appData.currentClickId + '&friendsFightingRoom=' + this.data.opt.friendsFightingRoom,
       success: (res) => {
         //转发时向用户关系表中更新一条转发记录(个人为person，群为GId)。
         require('../../utils/upDateShareInfoToUser_network.js').upDateShareInfoToUser_network(app, that, res)
       }
     }
   },
-  storeFriensNetwork: function () {
+  storeFriensNetwork () {
     const that = this;
     let [page, app] = [this, getApp()];
     let baseData = {
@@ -57,7 +57,7 @@ Page({
           }
         }
       },
-      fail: function (res) {
+      fail (res) {
         storeFriendsNetwork(baseData)
       }
     })
@@ -65,7 +65,7 @@ Page({
       const that = this;
       qcloud.request({
         login: false,
-        url: app.appData.baseUrl + 'storeFriendsNetwork',
+        url: `${app.appData.baseUrl }storeFriendsNetwork`,
         data,
         success(res) {
           console.info('【storeFriensNetwork】：存储finalData和clickId成功')
@@ -78,7 +78,7 @@ Page({
     }
   },
   goback() {
-    wx.redirectTo({
+    wx.reLaunch({
       url: '../entry/entry',
     })
   },

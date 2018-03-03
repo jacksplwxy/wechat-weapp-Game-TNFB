@@ -1,7 +1,15 @@
 <view class='title'>
-  <text> 选择你们想要较量的领域对战吧</text>
-  <button open-type='share' type='primary' style='width:80%;' disabled='{{choosed}}' class="{{!choosed ? 'animated pulse infinite' : ''}}">转发给好友</button>
+  <text> 选择好友之间较量的领域</text>
 </view>
 <view>
-  <button wx:for="{{question_sort}}" class="{{index+1==sortId&&sortId!=='' ? 'animated fadeIn' : ''}} sort" bindtap='getShareInfo' data-sortid='{{item.id}}' data-sortname='{{item.sort}}'>{{item.sort}}</button>
+  <button  wx:for="{{question_sort}}" class="{{index+1==sortId&&sortId!=='' ? 'animated fadeIn' : ''}} sort" bindtap='getShareInfo' data-sortid='{{item.id}}' data-sortname='{{item.sort}}'>{{item.sort}}</button>
+</view>
+
+
+<view class='enrollToast' wx:if='{{showShareButton}}'>
+  <view class='toast'></view>
+  <view class='content'>
+    <button type='primary' open-type='share'>转发给好友</button>
+    <button  style='margin-top:50rpx;' bindtap='closeShareButton'>取消</button>
+  </view>
 </view>

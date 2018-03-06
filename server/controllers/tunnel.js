@@ -20,7 +20,7 @@ const match = {//匹配对象：包含数据和函数
     let finished = true
 	function match_succ(player1,player2){
 		//创建房间
-        this.createRoom(player1.openId, player2.openId)
+        match.createRoom(player1.openId, player2.openId)
         //队列中删除匹配好的2个玩家
         tools.deleteQueueOpenId(player1.openId)
         tools.deleteQueueOpenId(player2.openId)
@@ -35,7 +35,7 @@ const match = {//匹配对象：包含数据和函数
             for (let index2 = index1; index2 < this.queueData.length; index2++) {
               let player2 = players[this.queueData[index2]]
               if (player2.friendsFightingRoom === undefined && player2.sortId === player1.sortId && Math.abs(player2.score - player1.score) < option.MAX_SCORE_GAP && player2.openId !== player1.openId) {
-                this.match_succ(player1,player2)
+                match_succ(player1,player2)
 				//结束该player1的匹配
                 break
               }

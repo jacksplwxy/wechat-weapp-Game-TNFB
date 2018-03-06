@@ -727,6 +727,20 @@ CREATE TABLE `user_network` (
 --
 -- Indexes for dumped tables
 --
+--
+-- 表的结构 `fighting_record`
+--
+
+CREATE TABLE `fighting_record` (
+  `id` int(11) NOT NULL,
+  `room_name` varchar(128) NOT NULL,
+  `run_away` tinyint(1) NOT NULL,
+  `open_id_winner` varchar(64) NOT NULL,
+  `open_id_loser` varchar(64) NOT NULL,
+  `score_winner` int(11) NOT NULL,
+  `score_loser` int(11) NOT NULL,
+  `time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
 -- Indexes for table `cSessionInfo`
